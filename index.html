@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>นับถอยหลังกำหนดการ</title>
+<meta name="theme-color" content="#FFF2E1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Countdown">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* palette */
+    --cream:#F8F4E1; --paper:#FFF2E1; --sand:#EAD8C0; --tan:#D1BB9E; --khaki:#A79277; --taupe:#8D7E6B;
+    --latte:#AF8F6F; --brown:#74512D; --coffee:#543310; --espresso:#402101;
+    --ink:var(--coffee); --muted:var(--taupe);
+    /* category tones, harmonised to the palette */
+    --c-exam:#B4553A; --c-study:#5F7C86; --c-love:#C77D8A; --c-family:#6F8A5B; --c-work:#C99A3E; --c-other:#8D7E6B;
+    --p:3px; /* pixel unit */
+    --pixel:"Silkscreen","Pixelify Sans",monospace;
+    --thai:"Chakra Petch",system-ui,sans-serif;
+    --tiny:"Silkscreen","Pixelify Sans",monospace;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0}
+  body{
+    font-family:var(--thai);color:var(--ink);min-height:100vh;
+    background-color:var(--cream);
+    background-image:
+      linear-gradient(var(--sand) 1px,transparent 1px),
+      linear-gradient(90deg,var(--sand) 1px,transparent 1px);
+    background-size:24px 24px;background-position:-1px -1px;
+    display:flex;justify-content:center;padding:28px 16px 48px;
+  }
+  .app{width:100%;max-width:400px}
+  button{font:inherit;color:inherit}
+
+  /* pixel border: 4 hard shadows leave the corners notched */
+  .px{
+    --bd:var(--ink);
+    box-shadow:
+      0 calc(-1*var(--p)) 0 0 var(--bd),
+      0 var(--p) 0 0 var(--bd),
+      calc(-1*var(--p)) 0 0 0 var(--bd),
+      var(--p) 0 0 0 var(--bd);
+  }
+
+  /* ===== screens ===== */
+  .screen{display:none;flex-direction:column;min-height:640px;position:relative;
+    background:var(--paper);padding:22px 22px 24px;
+    box-shadow:
+      0 -4px 0 0 var(--ink),0 4px 0 0 var(--ink),-4px 0 0 0 var(--ink),4px 0 0 0 var(--ink),
+      8px 8px 0 0 var(--tan),4px 12px 0 0 var(--tan),12px 4px 0 0 var(--tan)}
+  .screen.active{display:flex;animation:pop .18s steps(3) both}
+  @keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+
+  .kicker{font-family:var(--tiny);font-size:10px;letter-spacing:.12em;color:var(--khaki);text-transform:uppercase}
+
+  /* ===== home ===== */
+  .status{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:3px dashed var(--sand)}
+  .status .date{font-size:14px;font-weight:600;line-height:1.25}
+  .status .clock{font-family:var(--pixel);font-size:20px;font-weight:400;font-variant-numeric:tabular-nums;color:var(--brown);letter-spacing:.02em}
+  .hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 0 8px}
+  .hero h2{margin:4px 0 0;font-size:20px;font-weight:600}
+  .count{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:6px 0 2px}
+  .count .num{font-family:var(--pixel);font-weight:400;font-size:128px;line-height:.9;letter-spacing:-8px;color:var(--espresso);font-variant-numeric:tabular-nums;
+    text-shadow:5px 5px 0 var(--sand)}
+  .count .unit{font-size:22px;font-weight:600;padding-bottom:16px;color:var(--brown)}
+  .count.dday .num{font-size:72px;line-height:1.05}
+  .count.long .num{font-size:96px}
+  .bar{display:flex;gap:3px;margin:12px 0 4px}
+  .bar i{width:9px;height:12px;background:var(--sand)}
+  .bar i.on{background:var(--latte)}
+  .bar i.on.hot{background:var(--brown)}
+  .bar-l{font-family:var(--tiny);font-size:9px;color:var(--khaki);letter-spacing:.1em}
+  .hero .title{font-size:20px;font-weight:700;margin:14px 0 8px;max-width:100%;overflow-wrap:anywhere;cursor:pointer}
+  .hero .title:hover{text-decoration:underline 3px var(--tan);text-underline-offset:5px}
+  .meta{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+  .hero .desc{font-size:14px;color:var(--taupe);margin-top:10px;max-width:300px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+  .empty{color:var(--muted);font-size:15px;line-height:1.6}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:2px 9px;background:var(--cream);color:var(--ink)}
+  .chip.px{--p:2px;--bd:var(--tan)}
+  .sq{width:8px;height:8px;flex:none;background:var(--c-other);display:inline-block}
+
+  .next{margin-top:16px;padding-top:12px;border-top:3px dashed var(--sand)}
+  .next .kicker{display:block;margin:0 0 6px 2px}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 8px;cursor:pointer;background:transparent;border:0;width:100%;text-align:left}
+  .row:hover{background:var(--cream)}
+  .row .t{flex:1;min-width:0;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .d{font-size:13px;color:var(--muted);white-space:nowrap}
+  .row .n{font-family:var(--pixel);font-size:15px;color:var(--ink);font-weight:400;min-width:34px;text-align:right}
+  .row .n small{font-family:var(--thai);font-size:11px;color:var(--muted);font-weight:500;margin-left:2px}
+
+  /* ===== buttons ===== */
+  .actions{display:flex;flex-direction:column;align-items:stretch;gap:16px;margin:20px 8px 4px}
+  .btn{--bd:var(--ink);display:flex;align-items:center;justify-content:center;gap:10px;
+    font-family:var(--thai);font-size:16px;font-weight:600;border:0;padding:11px 18px;cursor:pointer;
+    background:var(--latte);color:var(--paper);position:relative;top:0;
+    box-shadow:0 -3px 0 0 var(--bd),0 3px 0 0 var(--bd),-3px 0 0 0 var(--bd),3px 0 0 0 var(--bd),
+      0 6px 0 0 var(--espresso),inset 0 -4px 0 0 var(--brown),inset 0 3px 0 0 rgba(255,242,225,.25)}
+  .btn:hover{background:#bb9b7a}
+  .btn:active{top:3px;box-shadow:0 -3px 0 0 var(--bd),0 3px 0 0 var(--bd),-3px 0 0 0 var(--bd),3px 0 0 0 var(--bd),inset 0 3px 0 0 var(--brown)}
+  .btn.dark{background:var(--brown);box-shadow:0 -3px 0 0 var(--bd),0 3px 0 0 var(--bd),-3px 0 0 0 var(--bd),3px 0 0 0 var(--bd),0 6px 0 0 var(--espresso),inset 0 -4px 0 0 var(--coffee),inset 0 3px 0 0 rgba(255,242,225,.18)}
+  .btn.dark:hover{background:#80603b}
+  .btn.light{background:var(--sand);color:var(--ink);box-shadow:0 -3px 0 0 var(--bd),0 3px 0 0 var(--bd),-3px 0 0 0 var(--bd),3px 0 0 0 var(--bd),0 6px 0 0 var(--espresso),inset 0 -4px 0 0 var(--tan)}
+  .btn.light:hover{background:#efe0cc}
+  .btn.danger{background:transparent;color:var(--c-exam);--bd:var(--c-exam);box-shadow:0 -3px 0 0 var(--bd),0 3px 0 0 var(--bd),-3px 0 0 0 var(--bd),3px 0 0 0 var(--bd)}
+  .btn.danger:hover{background:#f6e4d6}
+  svg.ic{width:18px;height:18px;shape-rendering:crispEdges;flex:none}
+  :focus-visible{outline:3px dashed var(--brown);outline-offset:5px}
+
+  /* ===== top bar ===== */
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:14px;border-bottom:3px dashed var(--sand)}
+  .topbar h1{margin:0;font-size:22px;font-weight:700;flex:1}
+  .topbar .kicker{display:block}
+  .back{width:40px;height:40px;border:0;background:var(--cream);cursor:pointer;display:grid;place-items:center;flex:none;margin:3px}
+  .back:hover{background:var(--sand)}
+
+  /* ===== form ===== */
+  form{display:flex;flex-direction:column;gap:20px;flex:1}
+  .field>label,.field>.lbl{display:flex;justify-content:space-between;align-items:baseline;font-weight:600;font-size:15px;margin-bottom:10px}
+  .datesel{display:grid;grid-template-columns:.8fr 1.7fr 1.1fr;gap:12px;padding:0 3px}
+  select,input[type=text],input[type=time],textarea{width:100%;font-family:var(--thai);font-size:16px;color:var(--ink);background:var(--cream);border:0;padding:10px 12px;margin:0;
+    box-shadow:0 -3px 0 0 var(--tan),0 3px 0 0 var(--tan),-3px 0 0 0 var(--tan),3px 0 0 0 var(--tan)}
+  select:focus,input:focus,textarea:focus{outline:none;background:#fffaf1;box-shadow:0 -3px 0 0 var(--brown),0 3px 0 0 var(--brown),-3px 0 0 0 var(--brown),3px 0 0 0 var(--brown)}
+  select{appearance:none;cursor:pointer;padding-right:30px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' shape-rendering='crispEdges' fill='%23543310'%3E%3Crect width='10' height='2'/%3E%3Crect x='2' y='2' width='6' height='2'/%3E%3Crect x='4' y='4' width='2' height='2'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center}
+  .pad3{padding:0 3px}
+  .timesel{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;padding:0 3px}
+  .timesel .to{font-size:14px;color:var(--muted)}
+  input[type=time]{font-family:var(--pixel);font-size:15px;min-height:44px}
+  input[type=time]::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer}
+  .tm{font-family:var(--pixel);font-size:12px;color:var(--brown);letter-spacing:.02em}
+  textarea{min-height:90px;resize:vertical;line-height:1.5}
+  input.big{font-size:18px;font-weight:600}
+  ::placeholder{color:var(--khaki);opacity:1}
+  .hint{font-size:13px;color:var(--muted);margin-top:10px;min-height:18px;display:flex;gap:8px;align-items:center}
+  .hint b{font-family:var(--pixel);font-size:14px;color:var(--brown);font-weight:400}
+  .cats{display:flex;flex-wrap:wrap;gap:12px;padding:3px}
+  .cat{--bd:var(--tan);display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font-size:14px;font-weight:500;padding:6px 12px;background:var(--cream);
+    box-shadow:0 -2px 0 0 var(--bd),0 2px 0 0 var(--bd),-2px 0 0 0 var(--bd),2px 0 0 0 var(--bd)}
+  .cat:hover{background:var(--sand)}
+  .cat[aria-pressed=true]{--bd:var(--ink);background:var(--coffee);color:var(--paper)}
+  #customCat{margin-top:14px;display:none}
+  .err{color:var(--c-exam);font-size:14px;font-weight:600;min-height:20px;margin:-6px 0 0}
+  .form-actions{margin-top:auto;display:flex;flex-direction:column;gap:16px;padding:0 8px}
+
+  /* ===== calendar ===== */
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .calhead h2{margin:0;font-size:18px;font-weight:700;text-align:center}
+  .calhead h2 span{display:block;font-family:var(--tiny);font-size:10px;font-weight:400;color:var(--khaki);letter-spacing:.1em}
+  .nav{width:36px;height:36px;border:0;background:var(--cream);cursor:pointer;display:grid;place-items:center;margin:3px}
+  .nav:hover{background:var(--sand)}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .dow{text-align:center;font-size:12px;color:var(--khaki);font-weight:600;padding:2px 0 4px}
+  .cal-day{aspect-ratio:1/1;border:0;background:var(--cream);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 0 7px;
+    font-family:var(--pixel);font-size:13px;font-weight:400;color:var(--ink)}
+  .cal-day:hover{background:var(--sand)}
+  .cal-day.out{background:transparent;color:var(--tan)}
+  .cal-day.today{box-shadow:inset 0 0 0 3px var(--latte)}
+  .cal-day.sel{background:var(--coffee);color:var(--paper);box-shadow:none}
+  .cal-day .dots{display:flex;gap:2px;min-height:5px}
+  .cal-day .sq{width:5px;height:5px}
+  .cal-day.sel .sq{box-shadow:0 0 0 1px var(--paper)}
+  .daylist{margin-top:16px;padding-top:12px;border-top:3px dashed var(--sand);flex:1}
+  .daylist h3{margin:0 0 6px;font-size:15px;font-weight:600}
+
+  .sync{font-family:var(--tiny);font-size:9px;color:var(--khaki);text-align:center;margin-top:16px;letter-spacing:.08em;min-height:12px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--coffee);color:var(--paper);padding:10px 16px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;
+    box-shadow:0 -3px 0 0 var(--espresso),0 3px 0 0 var(--espresso),-3px 0 0 0 var(--espresso),3px 0 0 0 var(--espresso),5px 6px 0 0 var(--tan);transition:opacity .15s steps(2)}
+  .toast.show{opacity:1}
+  .blink{animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:380px){.count .num{font-size:112px}.screen{padding:18px 16px 20px}}
+</style>
+</head>
+<body>
+<main class="app">
+
+  <!-- HOME -->
+  <section class="screen" id="v-home" aria-label="หน้าหลัก">
+    <div class="status">
+      <div><div class="kicker" id="nowDay">—</div><div class="date" id="nowDate">—</div></div>
+      <div class="clock" id="nowTime"></div>
+    </div>
+    <div class="hero" id="hero"></div>
+    <div class="next" id="nextWrap" hidden>
+      <span class="kicker">Next up</span>
+      <div id="nextList"></div>
+    </div>
+    <div class="actions">
+      <button class="btn dark" type="button" data-go="add"><svg class="ic" data-ic="plus"></svg>เพิ่มกำหนดการ</button>
+      <button class="btn light" type="button" data-go="calendar"><svg class="ic" data-ic="cal"></svg>ดูปฏิทิน</button>
+    </div>
+    <div class="sync">saved on this device</div>
+  </section>
+
+  <!-- ADD / EDIT -->
+  <section class="screen" id="v-add" aria-label="เพิ่มกำหนดการ">
+    <div class="topbar">
+      <button class="back px" type="button" data-go="home" aria-label="กลับ"><svg class="ic" data-ic="left"></svg></button>
+      <div><span class="kicker" id="formKicker">New deadline</span><h1 id="formTitle">เพิ่มกำหนดการ</h1></div>
+    </div>
+    <form id="form" novalidate>
+      <div class="field">
+        <div class="lbl">วัน เดือน ปี</div>
+        <div class="datesel">
+          <select id="fDay" aria-label="วัน"></select>
+          <select id="fMonth" aria-label="เดือน"></select>
+          <select id="fYear" aria-label="ปี (พ.ศ.)"></select>
+        </div>
+        <div class="hint" id="dateHint"></div>
+      </div>
+      <div class="field">
+        <div class="lbl">เวลา <span class="kicker">optional</span></div>
+        <div class="timesel">
+          <input id="fStart" type="time" aria-label="เวลาเริ่ม">
+          <span class="to">ถึง</span>
+          <input id="fEnd" type="time" aria-label="เวลาสิ้นสุด">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fTitle">ชื่อกำหนดการ</label>
+        <div class="pad3"><input class="big" id="fTitle" type="text" maxlength="80" placeholder="เช่น สอบวิชาฟิสิกส์" autocomplete="off"></div>
+      </div>
+      <div class="field">
+        <label for="fDesc">เขียนอธิบาย <span class="kicker">optional</span></label>
+        <div class="pad3"><textarea id="fDesc" maxlength="500" placeholder="รายละเอียด สถานที่ สิ่งที่ต้องเตรียม…"></textarea></div>
+      </div>
+      <div class="field">
+        <div class="lbl">หมวดหมู่</div>
+        <div class="cats" id="cats" role="group" aria-label="หมวดหมู่"></div>
+        <div class="pad3"><input id="customCat" type="text" maxlength="30" placeholder="พิมพ์ชื่อหมวดหมู่เอง"></div>
+      </div>
+      <p class="err" id="formErr" role="alert"></p>
+      <div class="form-actions">
+        <button class="btn dark" type="submit" id="saveBtn"><svg class="ic" data-ic="check"></svg>บันทึก</button>
+        <button class="btn danger" type="button" id="delBtn" hidden><svg class="ic" data-ic="trash"></svg><span>ลบกำหนดการนี้</span></button>
+      </div>
+    </form>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="screen" id="v-calendar" aria-label="ปฏิทิน">
+    <div class="topbar">
+      <button class="back px" type="button" data-go="home" aria-label="กลับ"><svg class="ic" data-ic="left"></svg></button>
+      <div><span class="kicker">Calendar</span><h1>ปฏิทิน</h1></div>
+    </div>
+    <div class="calhead">
+      <button type="button" class="nav px" id="prevM" aria-label="เดือนก่อน"><svg class="ic" data-ic="left"></svg></button>
+      <h2 id="calTitle"></h2>
+      <button type="button" class="nav px" id="nextM" aria-label="เดือนถัดไป"><svg class="ic" data-ic="right"></svg></button>
+    </div>
+    <div class="calgrid" id="calGrid"></div>
+    <div class="daylist">
+      <h3 id="dayTitle"></h3>
+      <div id="dayItems"></div>
+    </div>
+    <div class="actions"><button class="btn dark" type="button" id="addOnDay"><svg class="ic" data-ic="plus"></svg>เพิ่มในวันนี้</button></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  /* ---------- pixel icons (8x8 bitmaps) ---------- */
+  const ICONS={
+    plus:["...##...","...##...","...##...","########","########","...##...","...##...","...##..."],
+    cal:["#.#..#.#","########","#......#","########","#.#.#.##","########","#.#.#.##","########"],
+    left:["...#....","..##....",".###....","########","########",".###....","..##....","...#...."],
+    right:["....#...","....##..","....###.","########","########","....###.","....##..","....#..."],
+    check:[".......#","......##",".....##.","#...##..","##.##...",".###....","..#.....","........"],
+    trash:["..####..","########",".#....#.",".#.##.#.",".#.##.#.",".#.##.#.",".#....#.","..####.."]
+  };
+  document.querySelectorAll("svg[data-ic]").forEach(s=>{
+    const m=ICONS[s.dataset.ic];s.setAttribute("viewBox","0 0 8 8");s.setAttribute("aria-hidden","true");
+    s.innerHTML=m.map((r,y)=>[...r].map((c,x)=>c==="#"?`<rect x="${x}" y="${y}" width="1" height="1" fill="currentColor"/>`:"").join("")).join("");
+  });
+
+  const MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  const MONTHS_S=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  const MONTHS_EN=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  const DAYS=["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
+  const DAYS_EN=["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"];
+  const DOW=["อา","จ","อ","พ","พฤ","ศ","ส"];
+  const CATS=[
+    {id:"exam",name:"สอบ",color:"var(--c-exam)"},
+    {id:"study",name:"กำหนดการเรียน",color:"var(--c-study)"},
+    {id:"love",name:"แฟน",color:"var(--c-love)"},
+    {id:"family",name:"ครอบครัว",color:"var(--c-family)"},
+    {id:"work",name:"งานนอก",color:"var(--c-work)"},
+    {id:"other",name:"อื่นๆ",color:"var(--c-other)"}
+  ];
+  const $=s=>document.querySelector(s);
+  const pad=n=>String(n).padStart(2,"0");
+  const key=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+  const parse=k=>{const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)};
+  const today=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())};
+  const dayDiff=(a,b)=>Math.round((b-a)/86400000);
+  const daysUntil=k=>dayDiff(today(),parse(k));
+  const thaiDate=d=>d.getDate()+" "+MONTHS[d.getMonth()]+" "+(d.getFullYear()+543);
+  const thaiShort=d=>d.getDate()+" "+MONTHS_S[d.getMonth()]+" "+String(d.getFullYear()+543).slice(2);
+  const catOf=e=>CATS.find(c=>c.id===e.cat)||CATS[5];
+  const catLabel=e=>e.cat==="other"&&e.catName?e.catName:catOf(e).name;
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  /* ---------- storage: localStorage now, cloud (db) when available ---------- */
+  const LS="deadline-countdown-v1";
+  let items=[];
+  try{items=JSON.parse(localStorage.getItem(LS)||"[]")||[]}catch(e){items=[]}
+  const saveLocal=()=>{try{localStorage.setItem(LS,JSON.stringify(items))}catch(e){}};
+  const SEED=[
+    {id:"exam-mth10201",date:"2026-12-14",start:"09:00",end:"12:00",title:"สอบ MTH10201",desc:"โมดูล 1 · Mathematical Induction, Sequences and Series\n1 หน่วยกิต | Version 2566",cat:"exam",catName:"",created:1794614400000},
+    {id:"exam-mth10202",date:"2026-12-14",start:"13:00",end:"16:00",title:"สอบ MTH10202",desc:"โมดูล 2 · Vectors, Lines and Planes in a 3D-Space and Vector Functions\n1 หน่วยกิต | Version 2566",cat:"exam",catName:"",created:1794614400000},
+    {id:"exam-mth10203",date:"2026-12-15",start:"09:00",end:"12:00",title:"สอบ MTH10203",desc:"โมดูล 3 · Multiple Integrals\n1 หน่วยกิต | Version 2566",cat:"exam",catName:"",created:1794614400000}
+  ];
+  try{ if(localStorage.getItem(LS)===null){items=SEED.slice();saveLocal()} }catch(e){}
+  async function upsert(e){
+    const i=items.findIndex(x=>x.id===e.id);
+    if(i>=0)items[i]=e;else items.push(e);
+    saveLocal();renderAll();
+  }
+  async function remove(id){
+    items=items.filter(x=>x.id!==id);saveLocal();renderAll();
+  }
+  const newId=()=>"d"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+  /* ---------- routing ---------- */
+  const VIEWS=["home","add","calendar"];
+  function show(v){
+    if(!VIEWS.includes(v))v="home";
+    document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id==="v-"+v));
+    window.scrollTo(0,0);
+  }
+  function go(v,opts){
+    if(v==="add")openForm(opts||{});
+    if(v==="calendar")renderCal();
+    if(location.hash!=="#"+v){try{location.hash=v}catch(e){show(v)}}else show(v);
+  }
+  window.addEventListener("hashchange",()=>{const v=location.hash.slice(1);if(v==="add"&&!formOpen)openForm({});if(v==="calendar")renderCal();show(v)});
+  document.addEventListener("click",e=>{
+    const b=e.target.closest("[data-go]");if(b){go(b.dataset.go);return}
+    const r=e.target.closest("[data-edit]");if(r)go("add",{edit:r.dataset.edit});
+  });
+
+  /* ---------- home ---------- */
+  function tick(){
+    const n=new Date();
+    $("#nowDay").textContent=DAYS_EN[n.getDay()];
+    $("#nowDate").textContent="วัน"+DAYS[n.getDay()]+"ที่ "+thaiDate(n);
+    $("#nowTime").innerHTML=pad(n.getHours())+'<span class="blink">:</span>'+pad(n.getMinutes());
+    const k=key(n); if(tick.last&&tick.last!==k)renderAll(); tick.last=k;
+  }
+  const timeTxt=e=>e.start?(e.start+(e.end?" – "+e.end:"")):"";
+  const byTime=(a,b)=>a.date.localeCompare(b.date)||(a.start||"99").localeCompare(b.start||"99")||(a.created||0)-(b.created||0);
+  const upcoming=()=>items.filter(e=>daysUntil(e.date)>=0).sort(byTime);
+  const chip=e=>`<span class="chip px"><span class="sq" style="background:${catOf(e).color}"></span>${esc(catLabel(e))}</span>`;
+  function rowHTML(e,showDate){
+    const n=daysUntil(e.date);
+    const num=n===0?`<span class="n">D-0</span>`:n<0?`<span class="n" style="color:var(--khaki)">+${-n}<small>วัน</small></span>`:`<span class="n">${n}<small>วัน</small></span>`;
+    return `<button class="row" type="button" data-edit="${e.id}"><span class="sq" style="background:${catOf(e).color}"></span><span class="t">${esc(e.title)}</span>${showDate?`<span class="d">${thaiShort(parse(e.date))}</span>`:(e.start?`<span class="tm">${e.start}</span>`:"")}${num}</button>`;
+  }
+  function progressBar(e){
+    const SEG=20, start=new Date(e.created||Date.now()); start.setHours(0,0,0,0);
+    const total=Math.max(1,dayDiff(start,parse(e.date))), done=Math.min(total,Math.max(0,dayDiff(start,today())));
+    const on=daysUntil(e.date)<=0?SEG:Math.max(1,Math.round(done/total*SEG));
+    const hot=daysUntil(e.date)<=3;
+    return `<div class="bar" aria-hidden="true">${Array.from({length:SEG},(_,i)=>`<i class="${i<on?"on"+(hot?" hot":""):""}"></i>`).join("")}</div>`;
+  }
+  function renderHome(){
+    const up=upcoming(); const h=$("#hero");
+    if(!up.length){
+      h.innerHTML=`<span class="kicker">Countdown</span><h2>กำหนดการใกล้สุด</h2>
+        <div class="count"><span class="num" style="color:var(--tan)">--</span></div>
+        <p class="empty">ยังไม่มีกำหนดการ<br>กด “เพิ่มกำหนดการ” เพื่อเริ่มนับถอยหลัง</p>`;
+      $("#nextWrap").hidden=true;return;
+    }
+    const e=up[0], n=daysUntil(e.date);
+    h.innerHTML=`<span class="kicker">Countdown</span><h2>กำหนดการใกล้สุด</h2>
+      <div class="count ${n===0?"dday":n>=100?"long":""}">${n===0?'<span class="num">D-DAY</span>':`<span class="num">${n}</span><span class="unit">วัน</span>`}</div>
+      ${progressBar(e)}
+      <div class="title" role="button" tabindex="0" data-edit="${e.id}">${esc(e.title)}</div>
+      <div class="meta">${chip(e)}<span>${thaiDate(parse(e.date))}</span>${e.start?`<span class="tm">${timeTxt(e)}</span>`:""}</div>
+      ${e.desc?`<div class="desc">${esc(e.desc)}</div>`:""}`;
+    const rest=up.slice(1,5);
+    $("#nextWrap").hidden=!rest.length;
+    $("#nextList").innerHTML=rest.map(x=>rowHTML(x,true)).join("");
+  }
+  document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches(".title[data-edit]"))go("add",{edit:e.target.dataset.edit})});
+
+  /* ---------- form ---------- */
+  let formOpen=false, editing=null, chosenCat="exam";
+  const fD=$("#fDay"),fM=$("#fMonth"),fY=$("#fYear");
+  MONTHS.forEach((m,i)=>fM.add(new Option(m,i)));
+  function fillYears(sel){
+    const y0=new Date().getFullYear(); fY.innerHTML="";
+    const lo=Math.min(y0-1,sel||y0), hi=Math.max(y0+6,sel||y0);
+    for(let y=lo;y<=hi;y++)fY.add(new Option(String(y+543),y));
+  }
+  function fillDays(keep){
+    const max=new Date(+fY.value,+fM.value+1,0).getDate(); const cur=keep||+fD.value||1;
+    fD.innerHTML=""; for(let d=1;d<=max;d++)fD.add(new Option(d,d));
+    fD.value=Math.min(cur,max);
+  }
+  function updateHint(){
+    const k=fY.value+"-"+pad(+fM.value+1)+"-"+pad(fD.value), n=daysUntil(k), d=parse(k);
+    $("#dateHint").innerHTML="วัน"+DAYS[d.getDay()]+" · "+(n===0?"<b>D-DAY</b> วันนี้":n>0?"อีก <b>"+n+"</b> วัน":"ผ่านมาแล้ว "+(-n)+" วัน");
+  }
+  [fM,fY].forEach(s=>s.addEventListener("change",()=>{fillDays();updateHint()}));
+  fD.addEventListener("change",updateHint);
+
+  const catsEl=$("#cats");
+  catsEl.innerHTML=CATS.map(c=>`<button type="button" class="cat" data-cat="${c.id}" aria-pressed="false"><span class="sq" style="background:${c.color}"></span>${c.name}</button>`).join("");
+  function setCat(id){chosenCat=id;catsEl.querySelectorAll(".cat").forEach(b=>b.setAttribute("aria-pressed",b.dataset.cat===id));$("#customCat").style.display=id==="other"?"block":"none"}
+  catsEl.addEventListener("click",e=>{const b=e.target.closest(".cat");if(b){setCat(b.dataset.cat);if(b.dataset.cat==="other")$("#customCat").focus()}});
+
+  function openForm({edit,date}){
+    formOpen=true; editing=edit?items.find(x=>x.id===edit):null;
+    $("#formErr").textContent="";
+    const d=editing?parse(editing.date):(date?parse(date):today());
+    fillYears(d.getFullYear()); fY.value=d.getFullYear(); fM.value=d.getMonth(); fillDays(d.getDate()); updateHint();
+    $("#fStart").value=editing?editing.start||"":""; $("#fEnd").value=editing?editing.end||"":"";
+    $("#fTitle").value=editing?editing.title:""; $("#fDesc").value=editing?editing.desc||"":"";
+    $("#customCat").value=editing&&editing.catName?editing.catName:"";
+    setCat(editing?editing.cat:"exam");
+    $("#formTitle").textContent=editing?"แก้ไขกำหนดการ":"เพิ่มกำหนดการ";
+    $("#formKicker").textContent=editing?"Edit deadline":"New deadline";
+    const del=$("#delBtn"); del.hidden=!editing; del.querySelector("span").textContent="ลบกำหนดการนี้"; del.dataset.armed="";
+  }
+  $("#form").addEventListener("submit",e=>{
+    e.preventDefault();
+    const title=$("#fTitle").value.trim();
+    if(!title){$("#formErr").textContent="▲ กรุณาใส่ชื่อกำหนดการ";$("#fTitle").focus();return}
+    const rec={
+      id:editing?editing.id:newId(),
+      date:fY.value+"-"+pad(+fM.value+1)+"-"+pad(fD.value),
+      start:$("#fStart").value, end:$("#fStart").value?$("#fEnd").value:"",
+      title, desc:$("#fDesc").value.trim(), cat:chosenCat,
+      catName:chosenCat==="other"?$("#customCat").value.trim():"",
+      created:editing?editing.created:Date.now()
+    };
+    const was=!!editing;
+    upsert(rec); formOpen=false; toast(was?"แก้ไขแล้ว ✓":"เพิ่มกำหนดการแล้ว ✓"); go("home");
+  });
+  $("#delBtn").addEventListener("click",function(){
+    if(!this.dataset.armed){this.dataset.armed="1";this.querySelector("span").textContent="กดอีกครั้งเพื่อยืนยันการลบ";return}
+    remove(editing.id); formOpen=false; toast("ลบแล้ว"); go("home");
+  });
+
+  /* ---------- calendar ---------- */
+  let calY, calM, selKey;
+  function renderCal(){
+    if(calY==null){const t=today();calY=t.getFullYear();calM=t.getMonth();selKey=key(t)}
+    $("#calTitle").innerHTML=`<span>${MONTHS_EN[calM]} ${calY}</span>${MONTHS[calM]} ${calY+543}`;
+    const first=new Date(calY,calM,1), start=new Date(calY,calM,1-first.getDay());
+    const byDay={}; items.forEach(e=>(byDay[e.date]=byDay[e.date]||[]).push(e));
+    const tk=key(today());
+    let html=DOW.map(d=>`<div class="dow">${d}</div>`).join("");
+    for(let i=0;i<42;i++){
+      const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i), k=key(d), list=byDay[k]||[];
+      const cls=["cal-day",d.getMonth()!==calM?"out":"",k===tk?"today":"",k===selKey?"sel":""].join(" ");
+      html+=`<button type="button" class="${cls}" data-day="${k}" aria-label="${thaiDate(d)}${list.length?" มี "+list.length+" กำหนดการ":""}">${d.getDate()}<span class="dots">${list.slice(0,3).map(e=>`<span class="sq" style="background:${catOf(e).color}"></span>`).join("")}</span></button>`;
+    }
+    $("#calGrid").innerHTML=html;
+    const sd=parse(selKey), list=(byDay[selKey]||[]).slice().sort(byTime);
+    $("#dayTitle").textContent="วัน"+DAYS[sd.getDay()]+"ที่ "+thaiDate(sd);
+    $("#dayItems").innerHTML=list.length?list.map(e=>rowHTML(e,false)).join(""):`<p class="empty" style="margin:6px 8px;font-size:14px">ไม่มีกำหนดการ</p>`;
+  }
+  $("#calGrid").addEventListener("click",e=>{const b=e.target.closest("[data-day]");if(!b)return;selKey=b.dataset.day;const d=parse(selKey);calY=d.getFullYear();calM=d.getMonth();renderCal()});
+  $("#prevM").onclick=()=>{calM--;if(calM<0){calM=11;calY--}renderCal()};
+  $("#nextM").onclick=()=>{calM++;if(calM>11){calM=0;calY++}renderCal()};
+  $("#addOnDay").onclick=()=>go("add",{date:selKey});
+
+  function renderAll(){renderHome();if($("#v-calendar").classList.contains("active"))renderCal()}
+  let tt; function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1800)}
+
+  tick(); setInterval(tick,1000);
+  renderHome();
+  const startV=location.hash.slice(1);
+  if(startV==="add")openForm({}); if(startV==="calendar")renderCal();
+  show(startV||"home");
+})();
+</script>
+</body>
+</html>
