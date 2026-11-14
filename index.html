@@ -320,12 +320,23 @@
   let items=[];
   try{items=JSON.parse(localStorage.getItem(LS)||"[]")||[]}catch(e){items=[]}
   const saveLocal=()=>{try{localStorage.setItem(LS,JSON.stringify(items))}catch(e){}};
-  const SEED=[
-    {id:"exam-mth10201",date:"2026-12-14",start:"09:00",end:"12:00",title:"สอบ MTH10201",desc:"โมดูล 1 · Mathematical Induction, Sequences and Series\n1 หน่วยกิต | Version 2566",cat:"exam",catName:"",created:1794614400000},
-    {id:"exam-mth10202",date:"2026-12-14",start:"13:00",end:"16:00",title:"สอบ MTH10202",desc:"โมดูล 2 · Vectors, Lines and Planes in a 3D-Space and Vector Functions\n1 หน่วยกิต | Version 2566",cat:"exam",catName:"",created:1794614400000},
-    {id:"exam-mth10203",date:"2026-12-15",start:"09:00",end:"12:00",title:"สอบ MTH10203",desc:"โมดูล 3 · Multiple Integrals\n1 หน่วยกิต | Version 2566",cat:"exam",catName:"",created:1794614400000}
-  ];
-  try{ if(localStorage.getItem(LS)===null){items=SEED.slice();saveLocal()} }catch(e){}
+  /* events.json in the repo = schedule added for you; each id is imported once per device.
+     Bump "rev" to push an update to an event that was already imported. */
+  const SEEN="deadline-countdown-seen";
+  let seen={}; try{seen=JSON.parse(localStorage.getItem(SEEN)||"{}")||{}}catch(e){}
+  async function syncEvents(){
+    let data; try{const r=await fetch("events.json",{cache:"no-store"}); if(!r.ok)return; data=await r.json()}catch(e){return}
+    let added=0, changed=false;
+    for(const ev of (data.events||[])){
+      if(!ev||!ev.id||!/^\d{4}-\d{2}-\d{2}$/.test(ev.date||"")||!ev.title)continue;
+      const rev=ev.rev||1, had=seen[ev.id], i=items.findIndex(x=>x.id===ev.id);
+      const rec={id:ev.id,date:ev.date,start:ev.start||"",end:ev.end||"",title:String(ev.title),desc:ev.desc||"",
+        cat:CATS.some(c=>c.id===ev.cat)?ev.cat:"other",catName:ev.catName||"",created:i>=0?items[i].created:Date.now()};
+      if(had==null){ if(i<0){items.push(rec);added++} seen[ev.id]=rev; changed=true; }
+      else if(rev>had){ if(i>=0)items[i]=rec; seen[ev.id]=rev; changed=true; }
+    }
+    if(changed){saveLocal();try{localStorage.setItem(SEEN,JSON.stringify(seen))}catch(e){}renderAll();if(added)toast("เพิ่มกำหนดการใหม่ "+added+" รายการ ✓")}
+  }
   async function upsert(e){
     const i=items.findIndex(x=>x.id===e.id);
     if(i>=0)items[i]=e;else items.push(e);
@@ -490,6 +501,8 @@
   const startV=location.hash.slice(1);
   if(startV==="add")openForm({}); if(startV==="calendar")renderCal();
   show(startV||"home");
+  syncEvents();
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncEvents()});
 })();
 </script>
 </body>

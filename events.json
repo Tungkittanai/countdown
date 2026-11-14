@@ -1,0 +1,34 @@
+{
+  "events": [
+    {
+      "id": "exam-mth10201",
+      "rev": 1,
+      "date": "2026-12-14",
+      "start": "09:00",
+      "end": "12:00",
+      "title": "สอบ MTH10201",
+      "desc": "โมดูล 1 · Mathematical Induction, Sequences and Series\n1 หน่วยกิต | Version 2566",
+      "cat": "exam"
+    },
+    {
+      "id": "exam-mth10202",
+      "rev": 1,
+      "date": "2026-12-14",
+      "start": "13:00",
+      "end": "16:00",
+      "title": "สอบ MTH10202",
+      "desc": "โมดูล 2 · Vectors, Lines and Planes in a 3D-Space and Vector Functions\n1 หน่วยกิต | Version 2566",
+      "cat": "exam"
+    },
+    {
+      "id": "exam-mth10203",
+      "rev": 1,
+      "date": "2026-12-15",
+      "start": "09:00",
+      "end": "12:00",
+      "title": "สอบ MTH10203",
+      "desc": "โมดูล 3 · Multiple Integrals\n1 หน่วยกิต | Version 2566",
+      "cat": "exam"
+    }
+  ]
+}
