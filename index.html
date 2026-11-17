@@ -175,6 +175,17 @@
   .daylist{margin-top:16px;padding-top:12px;border-top:3px dashed var(--sand);flex:1}
   .daylist h3{margin:0 0 6px;font-size:15px;font-weight:600}
 
+  .install{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px auto 0;background:transparent;border:0;cursor:pointer;
+    font-size:14px;font-weight:600;color:var(--brown);padding:6px 10px;border-bottom:3px dashed var(--tan)}
+  .install:hover{color:var(--espresso);border-bottom-color:var(--latte)}
+  .install svg.ic{width:16px;height:16px}
+  .sheet-bg{position:fixed;inset:0;background:rgba(64,33,1,.35);display:flex;align-items:flex-end;justify-content:center;padding:16px;z-index:10}
+  .sheet{width:100%;max-width:400px;background:var(--paper);padding:20px 22px 22px;margin-bottom:8px;
+    box-shadow:0 -4px 0 0 var(--ink),0 4px 0 0 var(--ink),-4px 0 0 0 var(--ink),4px 0 0 0 var(--ink),8px 8px 0 0 var(--tan);animation:pop .18s steps(3) both}
+  .sheet h2{margin:2px 0 12px;font-size:20px}
+  .sheet ol{margin:0 0 20px;padding-left:22px;line-height:1.7;font-size:15px}
+  .sheet ol b{color:var(--brown)}
+  .sheet .btn{width:100%;margin-bottom:6px}
   .sync{font-family:var(--tiny);font-size:9px;color:var(--khaki);text-align:center;margin-top:16px;letter-spacing:.08em;min-height:12px}
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--coffee);color:var(--paper);padding:10px 16px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;
     box-shadow:0 -3px 0 0 var(--espresso),0 3px 0 0 var(--espresso),-3px 0 0 0 var(--espresso),3px 0 0 0 var(--espresso),5px 6px 0 0 var(--tan);transition:opacity .15s steps(2)}
@@ -203,6 +214,7 @@
       <button class="btn dark" type="button" data-go="add"><svg class="ic" data-ic="plus"></svg>เพิ่มกำหนดการ</button>
       <button class="btn light" type="button" data-go="calendar"><svg class="ic" data-ic="cal"></svg>ดูปฏิทิน</button>
     </div>
+    <button class="install" type="button" id="installBtn" hidden><svg class="ic" data-ic="phone"></svg>ติดตั้งเป็นแอปบนมือถือ</button>
     <div class="sync">saved on this device</div>
   </section>
 
@@ -270,6 +282,14 @@
     <div class="actions"><button class="btn dark" type="button" id="addOnDay"><svg class="ic" data-ic="plus"></svg>เพิ่มในวันนี้</button></div>
   </section>
 </main>
+<div class="sheet-bg" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+    <span class="kicker">Install</span>
+    <h2 id="sheetT">เพิ่มไอคอนบนหน้าจอ</h2>
+    <ol id="sheetSteps"></ol>
+    <button class="btn dark" type="button" id="sheetOk">เข้าใจแล้ว</button>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -281,6 +301,7 @@
     left:["...#....","..##....",".###....","########","########",".###....","..##....","...#...."],
     right:["....#...","....##..","....###.","########","########","....###.","....##..","....#..."],
     check:[".......#","......##",".....##.","#...##..","##.##...",".###....","..#.....","........"],
+    phone:["..####..",".#....#.",".#....#.",".#....#.",".#....#.",".#....#.",".#.##.#.","..####.."],
     trash:["..####..","########",".#....#.",".#.##.#.",".#.##.#.",".#.##.#.",".#....#.","..####.."]
   };
   document.querySelectorAll("svg[data-ic]").forEach(s=>{
@@ -495,6 +516,23 @@
 
   function renderAll(){renderHome();if($("#v-calendar").classList.contains("active"))renderCal()}
   let tt; function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1800)}
+
+  /* ---------- install as app ---------- */
+  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  let deferred=null; const ib=$("#installBtn");
+  if(!standalone&&(isIOS||/android/i.test(navigator.userAgent)))ib.hidden=false;
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;if(!standalone)ib.hidden=false});
+  window.addEventListener("appinstalled",()=>{ib.hidden=true;toast("ติดตั้งแล้ว ✓ เปิดจากไอคอนบนหน้าจอได้เลย")});
+  function showSheet(steps){$("#sheetSteps").innerHTML=steps.map(x=>"<li>"+x+"</li>").join("");$("#sheet").hidden=false;$("#sheetOk").focus()}
+  ib.addEventListener("click",async()=>{
+    if(deferred){deferred.prompt();try{await deferred.userChoice}catch(e){}deferred=null;return}
+    if(isIOS)showSheet(["เปิดหน้านี้ใน <b>Safari</b>","กดปุ่ม <b>แชร์</b> (สี่เหลี่ยมมีลูกศรชี้ขึ้น) ด้านล่างจอ","เลื่อนลงแล้วเลือก <b>เพิ่มไปยังหน้าจอโฮม</b>","กด <b>เพิ่ม</b> มุมขวาบน"]);
+    else showSheet(["เปิดหน้านี้ใน <b>Chrome</b>","กดเมนู <b>⋮</b> มุมขวาบน","เลือก <b>ติดตั้งแอป</b> หรือ <b>เพิ่มลงในหน้าจอหลัก</b>","กด <b>ติดตั้ง</b>"]);
+  });
+  $("#sheetOk").onclick=()=>{$("#sheet").hidden=true};
+  $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")$("#sheet").hidden=true});
+  if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 
   tick(); setInterval(tick,1000);
   renderHome();
