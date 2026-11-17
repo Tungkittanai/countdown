@@ -209,41 +209,41 @@
   .install svg.ic{width:16px;height:16px}
   .sheet-bg{position:fixed;inset:0;background:rgba(64,33,1,.35);display:flex;align-items:flex-end;justify-content:center;padding:16px;z-index:10}
   .sheet{width:100%;max-width:400px;background:var(--paper);padding:20px 22px 22px;margin-bottom:8px;
-    box-shadow:0 -4px 0 0 var(--ink),0 4px 0 0 var(--ink),-4px 0 0 0 var(--ink),4px 0 0 0 var(--ink),8px 8px 0 0 var(--tan);animation:pop .18s steps(3) both}
+    box-shadow:0 -4px 0 0 var(--ink),0 4px 0 0 var(--ink),-4px 0 0 0 var(--ink),4px 0 0 0 var(--ink),8px 8px 0 0 var(--tan);animation:pop .18s cubic-bezier(.2,.8,.2,1) both}
   .sheet h2{margin:2px 0 12px;font-size:20px}
   .sheet ol{margin:0 0 20px;padding-left:22px;line-height:1.7;font-size:15px}
   .sheet ol b{color:var(--brown)}
   .sheet .btn{width:100%;margin-bottom:6px}
   .sync{flex:none;font-family:var(--tiny);font-size:9px;color:var(--khaki);text-align:center;margin-top:10px;letter-spacing:.08em;min-height:12px}
   .toast{position:fixed;left:50%;top:max(22px,env(safe-area-inset-top));transform:translateX(-50%);white-space:nowrap;z-index:60;background:var(--coffee);color:var(--paper);padding:10px 16px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;
-    box-shadow:0 -3px 0 0 var(--espresso),0 3px 0 0 var(--espresso),-3px 0 0 0 var(--espresso),3px 0 0 0 var(--espresso),5px 6px 0 0 var(--tan);transition:opacity .15s steps(2)}
+    box-shadow:0 -3px 0 0 var(--espresso),0 3px 0 0 var(--espresso),-3px 0 0 0 var(--espresso),3px 0 0 0 var(--espresso),5px 6px 0 0 var(--tan);transition:opacity .15s ease-out}
   .toast.show{opacity:1}
   .blink{animation:blink 1s steps(1) infinite}
   /* idle: big number floats gently */
   .count .num{will-change:transform;animation:float 4s ease-in-out infinite}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
   /* progress bar fills one block at a time */
-  .bar i.on{animation:fill .2s steps(2) both;animation-delay:calc(var(--i)*35ms + .15s)}
+  .bar i.on{animation:fill .2s ease-out both;animation-delay:calc(var(--i)*35ms + .15s)}
   @keyframes fill{from{opacity:0;transform:scaleY(.3)}to{opacity:1;transform:none}}
-  .bar i.on.hot:last-of-type{animation:fill .2s steps(2) both,pulse 1.4s steps(2) infinite}
+  .bar i.on.hot:last-of-type{animation:fill .2s ease-out both,pulse 1.4s ease-out infinite}
   @keyframes pulse{50%{opacity:.45}}
   /* list items step in */
-  .row{animation:rowIn .24s steps(3) both;animation-delay:calc(var(--i,0)*50ms)}
+  .row{animation:rowIn .24s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*50ms)}
   @keyframes rowIn{from{transform:translateX(-10px);opacity:0}to{transform:none;opacity:1}}
   /* presses */
-  .cat,.cal-day,.row,.back,.nav,.install{transition:transform .08s steps(2)}
+  .cat,.cal-day,.row,.back,.nav,.install{transition:transform .08s ease-out}
   .cat:active,.cal-day:active,.back:active,.nav:active{transform:scale(.9)}
   .row:active{transform:translateX(4px)}
-  .cat[aria-pressed=true]{animation:bop .25s steps(3)}
-  .cal-day.sel{animation:bop .25s steps(3)}
+  .cat[aria-pressed=true]{animation:bop .25s cubic-bezier(.2,.8,.2,1)}
+  .cal-day.sel{animation:bop .25s cubic-bezier(.2,.8,.2,1)}
   @keyframes bop{40%{transform:scale(1.12)}100%{transform:none}}
-  .btn .ic{transition:transform .1s steps(2)}
+  .btn .ic{transition:transform .1s ease-out}
   .btn:active .ic{transform:scale(.8) rotate(-8deg)}
   /* pixel burst on tap */
   .burst{position:fixed;width:6px;height:6px;pointer-events:none;z-index:50;background:var(--c);will-change:transform,opacity;
-    animation:burst .45s steps(5) forwards}
+    animation:burst .45s cubic-bezier(.2,.7,.3,1) forwards}
   @keyframes burst{to{transform:translate3d(var(--bx),var(--by),0);opacity:0}}
-  .toast.show{animation:toastIn .2s steps(3)}
+  .toast.show{animation:toastIn .2s cubic-bezier(.2,.8,.2,1)}
   @keyframes toastIn{from{transform:translate(-50%,-10px)}to{transform:translate(-50%,0)}}
   @keyframes blink{50%{opacity:0}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ambient{display:none}}
@@ -275,7 +275,7 @@
       <button class="btn light" type="button" data-go="calendar"><svg class="ic" data-ic="cal"></svg>ดูปฏิทิน</button>
     </div>
     <button class="install" type="button" id="installBtn" hidden><svg class="ic" data-ic="phone"></svg>ติดตั้งเป็นแอปบนมือถือ</button>
-    <div class="sync">saved on this device</div>
+    <div class="sync">saved on this device · v6</div>
   </section>
 
   <!-- ADD / EDIT -->
@@ -609,7 +609,15 @@
   });
   $("#sheetOk").onclick=()=>{$("#sheet").hidden=true};
   $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")$("#sheet").hidden=true});
-  if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+  if("serviceWorker" in navigator&&location.protocol==="https:"){
+    // a new version takes over → reload once so the latest page is shown
+    let reloaded=false;
+    if(navigator.serviceWorker.controller)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!reloaded){reloaded=true;location.reload()}});
+    navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+      reg.update().catch(()=>{});
+      document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})});
+    }).catch(()=>{});
+  }
 
   /* ambient motes */
   const MOTE_C=["var(--sand)","var(--tan)","var(--latte)"];
