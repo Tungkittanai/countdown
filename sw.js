@@ -1,5 +1,5 @@
 // Offline support: app files are cached; pages and events.json try the network first.
-const CACHE = "countdown-v3";
+const CACHE = "countdown-v4";
 const CORE = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png", "icon-maskable.png", "events.json"];
 
 self.addEventListener("install", e => {
